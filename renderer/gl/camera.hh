@@ -51,6 +51,14 @@ class Camera {
 
     void shift(Movement dir, float dist);
 
+    // Set camera vectors, should not be used with pitch and yaw
+    void set(glm::vec3 new_pos, glm::vec3 new_front, glm::vec3 new_up) {
+      pos = new_pos;
+      front = glm::normalize(new_front);
+      up = glm::normalize(new_up);
+      right = glm::normalize(glm::cross(front, up));
+    }
+
     // difference in yaw and pitch
     void turn(float dyaw, float dpitch);
 

@@ -53,6 +53,7 @@ PYBIND11_MODULE(objrender, m) {
   auto camera = py::class_<Camera>(m, "Camera")
     .def("shift", &Camera::shift)
     .def("turn", &Camera::turn)
+    .def("set", &Camera::set)
     .def("updateDirection", &Camera::updateDirection)
     .def_readwrite("pos", &Camera::pos)
     .def_readwrite("yaw", &Camera::yaw) // init yaw = -90 --> facing (0,0,1)
