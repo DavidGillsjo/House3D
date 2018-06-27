@@ -44,6 +44,11 @@ class SUNCGRenderAPI {
     void loadScene(
         std::string obj_file, std::string model_category_file,
         std::string semantic_label_file);
+    // Same as above, but does not use cache.
+    // Should not be used together with loadScene as this assumes ownership of _scene ptr.
+    void loadSceneNoCache(
+        std::string obj_file, std::string model_category_file,
+        std::string semantic_label_file);
 
     void setMode(SUNCGScene::RenderMode m) { scene_->set_mode(m); }
 

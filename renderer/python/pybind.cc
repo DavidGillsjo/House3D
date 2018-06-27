@@ -33,6 +33,7 @@ PYBIND11_MODULE(objrender, m) {
     .def("setMode", &SUNCGRenderAPI::setMode)
     .def("loadSceneSUNCG", &SUNCGRenderAPI::loadScene)
     .def("loadScene", &SUNCGRenderAPI::loadScene)
+    .def("loadSceneNoCache", &SUNCGRenderAPI::loadSceneNoCache)
     .def("resolution", &SUNCGRenderAPI::resolution)
     .def("render", &SUNCGRenderAPI::render)
     .def("renderCubeMap", &SUNCGRenderAPI::renderCubeMap);

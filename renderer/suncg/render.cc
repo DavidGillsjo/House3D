@@ -88,4 +88,13 @@ void SUNCGRenderAPI::loadScene(
   init_camera_();
 }
 
+void SUNCGRenderAPI::loadSceneNoCache(
+    std::string obj_file, std::string model_category_file,
+    std::string semantic_label_file) {
+  // Delete old scene and create new
+  delete scene_;
+  scene_ = new SUNCGScene{obj_file, model_category_file, semantic_label_file};
+  init_camera_();
+}
+
 }
