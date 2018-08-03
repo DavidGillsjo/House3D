@@ -364,6 +364,7 @@ class House(object):
                     connMap[tx,ty] = cur_dist + 1
                     if cur_dist + 1 > self.maxConnDist:
                         self.maxConnDist = cur_dist + 1
+        self.connectedCoors = que
 
         return True
 
