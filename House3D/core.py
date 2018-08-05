@@ -168,8 +168,14 @@ class Environment():
             locMap = self.cachedLocMap.copy()
 
         rad = house.robotRad / house.L_det * house.n_row
-        x, y = house.to_grid(x, y)
-        locMap = cv2.circle(locMap, (x, y), int(rad), (255, 50, 50), thickness=-1)
+        try:
+            iterator = iter(x)
+        except TypeError:
+            x = [x]
+            y = [y]
+        for xe, ye in zip(x,y):
+            xe, ye = house.to_grid(xe, ye)
+            locMap = cv2.circle(locMap, (xe, ye), int(rad), (255, 50, 50), thickness=-1)
         locMap = cv2.resize(locMap, resolution)
         return locMap
 
