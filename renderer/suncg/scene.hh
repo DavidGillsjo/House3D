@@ -48,6 +48,7 @@ class SUNCGScene : public ObjSceneBase {
         std::string obj_file,
         std::string model_category_file,
         std::string semantic_label_file,
+        std::string model_blacklist_file = "",
         float minDepth = 0.3);
     ~SUNCGScene() {}
 
@@ -79,6 +80,8 @@ class SUNCGScene : public ObjSceneBase {
 
   protected:
     void parse_scene();
+
+    void filter_models(std::string model_blacklist_file);
 
     std::string name_from_mode_id(std::string name) {
       // return the name used for rendering, from model id

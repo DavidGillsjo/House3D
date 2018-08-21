@@ -43,12 +43,12 @@ class SUNCGRenderAPI {
     // semantic_label_file: path to colormap_coarse.csv or colormap_fine.csv
     void loadScene(
         std::string obj_file, std::string model_category_file,
-        std::string semantic_label_file);
+        std::string semantic_label_file, std::string model_blacklist_file);
     // Same as above, but does not use cache.
     // Should not be used together with loadScene as this assumes ownership of _scene ptr.
     void loadSceneNoCache(
         std::string obj_file, std::string model_category_file,
-        std::string semantic_label_file);
+        std::string semantic_label_file, std::string model_blacklist_file);
 
     void setMode(SUNCGScene::RenderMode m) { scene_->set_mode(m); }
 
@@ -149,9 +149,9 @@ class SUNCGRenderAPIThread {
 
     void loadScene(
         std::string obj_file, std::string model_category_file,
-        std::string semantic_label_file) {
+        std::string semantic_label_file, std::string model_blacklist_file) {
       exec_.execute_sync([=]() {
-            this->api_->loadScene(obj_file, model_category_file, semantic_label_file);
+            this->api_->loadScene(obj_file, model_category_file, semantic_label_file, model_blacklist_file);
           });
     }
 

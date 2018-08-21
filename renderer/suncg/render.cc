@@ -78,11 +78,11 @@ Matuc SUNCGRenderAPI::renderCubeMap() {
 
 void SUNCGRenderAPI::loadScene(
     std::string obj_file, std::string model_category_file,
-    std::string semantic_label_file) {
+    std::string semantic_label_file, std::string model_blacklist_file) {
   // check cache for previously loaded scenes
   scene_ = dynamic_cast<SUNCGScene*>(scene_cache_.get(obj_file));
   if (!scene_) {
-    scene_ = new SUNCGScene{obj_file, model_category_file, semantic_label_file};
+    scene_ = new SUNCGScene{obj_file, model_category_file, semantic_label_file, model_blacklist_file};
     scene_cache_.put(obj_file, scene_);
   }
   init_camera_();
@@ -90,10 +90,10 @@ void SUNCGRenderAPI::loadScene(
 
 void SUNCGRenderAPI::loadSceneNoCache(
     std::string obj_file, std::string model_category_file,
-    std::string semantic_label_file) {
+    std::string semantic_label_file, std::string model_blacklist_file) {
   // Delete old scene and create new
   delete scene_;
-  scene_ = new SUNCGScene{obj_file, model_category_file, semantic_label_file};
+  scene_ = new SUNCGScene{obj_file, model_category_file, semantic_label_file, model_blacklist_file};
   init_camera_();
 }
 

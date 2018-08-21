@@ -12,6 +12,8 @@
 
 #include <stdexcept>
 
+#include <fstream>
+
 using namespace std;
 
 namespace {
@@ -135,7 +137,7 @@ SUNCGShader::SUNCGShader():
 
 
 SUNCGScene::SUNCGScene(string obj_file, string model_category_file,
-    string semantic_label_file, float minDepth):
+    string semantic_label_file, string model_blacklist_file, float minDepth):
   ObjSceneBase{obj_file},
   textures_{obj_.materials, obj_.base_dir},
   model_category_{model_category_file},
@@ -147,6 +149,10 @@ SUNCGScene::SUNCGScene(string obj_file, string model_category_file,
     // use FINE_GRAINED if color mapping > 128
     if (semantic_color_.size() > 128)
       set_object_name_resolution_mode(ObjectNameResolution::FINE);
+
+    // Read and filter using blacklist
+    if (!model_blacklist_file.empty())
+      filter_models(model_blacklist_file);
 
     // filter out person
     model_category_.filter_category(obj_.shapes, {"person"});
@@ -175,6 +181,30 @@ void SUNCGScene::deactivate() {
   for (auto& m : mesh_)
     m.deactivate();
   textures_.deactivate();
+}
+
+void SUNCGScene::filter_models(string model_blacklist_file) {
+  ifstream blf(model_blacklist_file);
+
+  if(!blf) {
+    print_debug("Could not open file %s\n", model_blacklist_file.c_str());
+    return;
+  }
+
+  std::string str;
+  std::unordered_set<string> blk_models;
+  while (std::getline(blf, str)) {
+    blk_models.insert("Model#"+str);
+    }
+
+  obj_.shapes.erase(
+      std::remove_if(obj_.shapes.begin(), obj_.shapes.end(),
+        [&](const ObjLoader::Shape& shape) {
+          return blk_models.find(shape.name) != blk_models.end();
+        }
+      ), obj_.shapes.end()
+  );
+
 }
 
 glm::vec3 SUNCGScene::get_color_by_shape_name(const string& name) {
