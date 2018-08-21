@@ -73,7 +73,7 @@ class Environment():
 
     def _load_objects(self):
         # load objects in self.house to GPU
-        self.api.loadScene(self.house.objFile, self.house.metaDataFile, self.config['colorFile'])
+        self.api.loadScene(self.house.objFile, self.house.metaDataFile, self.config['colorFile'], self.config['modelBlacklistFile'])
         self.api.setMode(self.api_mode)
         self.cam = self.api.getCamera()
 

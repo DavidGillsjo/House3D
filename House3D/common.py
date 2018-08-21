@@ -51,7 +51,9 @@ def create_default_config(prefix, colormap='coarse'):
         'modelCategoryFile':
         os.path.join(metadir, 'ModelCategoryMapping.csv'),
         'prefix':
-        prefix
+        prefix,
+        'modelBlacklistFile':
+        None
     }
     return ret
 
