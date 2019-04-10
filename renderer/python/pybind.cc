@@ -32,8 +32,8 @@ PYBIND11_MODULE(objrender, m) {
     .def("getCamera", &SUNCGRenderAPI::getCamera, py::return_value_policy::reference)
     .def("setMode", &SUNCGRenderAPI::setMode)
     .def("loadSceneSUNCG", &SUNCGRenderAPI::loadScene)
-    .def("loadScene", &SUNCGRenderAPI::loadScene)
-    .def("loadSceneNoCache", &SUNCGRenderAPI::loadSceneNoCache)
+    .def("loadScene", &SUNCGRenderAPI::loadScene, "obj_file"_a, "model_category_file"_a, "semantic_label_file"_a, "model_blacklist_file"_a="")
+    .def("loadSceneNoCache", &SUNCGRenderAPI::loadSceneNoCache, "obj_file"_a, "model_category_file"_a, "semantic_label_file"_a, "model_blacklist_file"_a="")
     .def("resolution", &SUNCGRenderAPI::resolution)
     .def("render", &SUNCGRenderAPI::render)
     .def("renderCubeMap", &SUNCGRenderAPI::renderCubeMap);
@@ -45,8 +45,8 @@ PYBIND11_MODULE(objrender, m) {
     .def("getCamera", &SUNCGRenderAPIThread::getCamera, py::return_value_policy::reference)
     .def("printContextInfo", &SUNCGRenderAPIThread::printContextInfo)
     .def("setMode", &SUNCGRenderAPIThread::setMode)
-    .def("loadSceneSUNCG", &SUNCGRenderAPIThread::loadScene)
-    .def("loadScene", &SUNCGRenderAPIThread::loadScene)
+    .def("loadSceneSUNCG", &SUNCGRenderAPIThread::loadScene, "obj_file"_a, "model_category_file"_a, "semantic_label_file"_a, "model_blacklist_file"_a="")
+    .def("loadScene", &SUNCGRenderAPIThread::loadScene, "obj_file"_a, "model_category_file"_a, "semantic_label_file"_a, "model_blacklist_file"_a="")
     .def("resolution", &SUNCGRenderAPIThread::resolution)
     .def("render", &SUNCGRenderAPIThread::render)
     .def("renderCubeMap", &SUNCGRenderAPIThread::renderCubeMap);
