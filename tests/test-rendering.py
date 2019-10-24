@@ -4,16 +4,13 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import time
-import os
-import sys
-import tqdm
 import numpy as np
 import cv2
 import argparse
+from itertools import count
 
 from House3D import objrender, create_default_config
-from House3D.objrender import Camera, RenderMode
+from House3D.objrender import RenderMode
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -22,19 +19,20 @@ if __name__ == '__main__':
     parser.add_argument('--height', type=int, default=600)
     parser.add_argument('--device', type=int, default=0)
     parser.add_argument('--interactive', action='store_true',
-        help='run interactive rendering (does not work under ssh)')
+                        help='run interactive rendering (does not work under ssh)')
     args = parser.parse_args()
 
     cfg = create_default_config('.')
 
     api = objrender.RenderAPI(args.width, args.height, device=args.device)
+
     api.printContextInfo()
 
     api.loadScene(args.obj, cfg['modelCategoryFile'], cfg['colorFile'])
     cam = api.getCamera()
 
     modes = [RenderMode.RGB, RenderMode.SEMANTIC, RenderMode.INSTANCE, RenderMode.DEPTH]
-    for t in tqdm.trange(10000):
+    for t in count():
         mode = modes[t % len(modes)]
         api.setMode(mode)
         mat = np.array(api.render())
@@ -45,7 +43,11 @@ if __name__ == '__main__':
             mat = mat[:, :, ::-1]   # cv expects bgr
 
         if args.interactive:
-            cv2.imshow("aaa", mat)
+            if mode == RenderMode.INSTANCE:
+                center_rgb = mat[args.height // 2, args.width // 2, ::-1]
+                center_instance = api.getNameFromInstanceColor(center_rgb[0], center_rgb[1], center_rgb[2])
+                print("Instance ID in the center: ", center_instance)
+            cv2.imshow("window", mat)
             key = cv2.waitKey(0)
             if key == 27 or key == ord('q'): #esc
                 break

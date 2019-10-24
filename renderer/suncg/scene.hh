@@ -78,6 +78,15 @@ class SUNCGScene : public ObjSceneBase {
 
     RenderMode get_mode() const { return mode_; }
 
+    std::string get_name_from_instance_color(int r, int g, int b) const {
+      int key = r * 256 * 256 + g * 256 + b;
+      auto itr = instance_color_to_name_.find(key);
+      if (itr != instance_color_to_name_.end()) {
+        return itr->second;
+      }
+      return "";
+    }
+
   protected:
     void parse_scene();
 
@@ -116,6 +125,10 @@ class SUNCGScene : public ObjSceneBase {
     };
     // material for each mesh. Must have same size as mesh_
     std::vector<MaterialDesc> materials_;
+
+    // keys: r * 256 * 256 + g * 256 + b
+    // value: shape.name as in the obj file
+    std::unordered_map<int, std::string> instance_color_to_name_;
 };
 
 } // namespace render

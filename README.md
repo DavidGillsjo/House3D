@@ -6,11 +6,12 @@
 <p align="center"><img src="https://user-images.githubusercontent.com/1381301/33509559-87c4e470-d6b7-11e7-8266-27c940d5729a.jpg" align="middle" width="600" /></p>
 
 House3D is a virtual 3D environment which consists of thousands of indoor scenes equipped with
-a diverse set of scene types, layouts and objects sourced from the [SUNCG dataset](http://suncg.cs.princeton.edu/).
+a diverse set of scene types, layouts and objects sourced from the [SUNCG dataset](https://arxiv.org/abs/1611.08974).
 It consists of over 45k indoor 3D scenes, ranging from studios to two-storied houses
 with swimming pools and fitness rooms. All 3D objects are fully annotated with category labels.
 Agents in the environment have access to observations of multiple modalities, including RGB images,
-depth, segmentation masks and top-down 2D map views.
+depth, segmentation masks and top-down 2D map views. The renderer runs at
+thousands frames per second, making it suitable for large-scale RL training.
 
 Usage instructions can be found at [INSTRUCTION.md](INSTRUCTION.md)
 
@@ -27,7 +28,7 @@ due to the diverse and large-scale dataset.
 <img src="https://user-images.githubusercontent.com/1381301/33511103-ff5a71b4-d6c9-11e7-8f6d-95cc42e5b4e0.gif" align="middle" width="800" />
 </p>
 
-### B. Embodied QA ([project page](http://embodiedqa.org/) | [paper](https://arxiv.org/abs/1711.11543))
+### B. Embodied QA ([project page](http://embodiedqa.org/) | [EQA paper](https://arxiv.org/abs/1711.11543) | [NMC paper](https://arxiv.org/abs/1810.11181))
 
 *Abhishek Das, Samyak Datta, Georgia Gkioxari, Stefan Lee, Devi Parikh, Dhruv Batra*
 
@@ -37,3 +38,19 @@ In order to answer, the agent must first intelligently navigate to explore the e
 <p align="center">
 <img src="https://user-images.githubusercontent.com/1381301/33509618-f77bf844-d6b7-11e7-850a-b10ba6ef4a68.gif" align="middle" width="800" />
 </p>
+
+## Citation
+
+If you use our platform in your research, you can cite us with:
+```
+@article{wu2018building,
+  title={Building generalizable agents with a realistic and rich 3D environment},
+  author={Wu, Yi and Wu, Yuxin and Gkioxari, Georgia and Tian, Yuandong},
+  journal={arXiv preprint arXiv:1801.02209},
+  year={2018}
+}
+```
+
+## License
+
+House3D is released under the [Apache 2.0 license](LICENSE).

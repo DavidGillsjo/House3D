@@ -12,6 +12,7 @@
 #include <future>
 #include <queue>
 #include <glm/glm.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/component_wise.hpp>
 
 #include "scene.hh"
@@ -61,8 +62,10 @@ class SUNCGRenderAPI {
     //  The mapping from color to class is in the CSV.
     //
     // For INSTANCE mode, returns a 3-channel image.
-    //  Each unique color means an instance and the coloring is consistent
-    //  across different views.
+    //  Each unique color means an instance, and the coloring of each instance
+    //  is consistent within a scene across different views.
+    //  You can use getNameFromInstanceColor(r, g, b) to know which object the
+    //  instance color maps to.
     //
     // For DEPTH mode, returns a 2-channel image:
     //  The first channel contains depth values scaled to (0, 255), where
@@ -99,7 +102,16 @@ class SUNCGRenderAPI {
     // Get the resolution.
     Geometry resolution() const { return geo_; }
 
-  private:
+    // r, g, b: integer in [0, 255]
+    // Returns: an object name defined in the obj file, or "" if not found.
+    // For SUNCG data, this object name is usually the "modelId" field
+    // in house.json. Note that each scene may have many objects with the same
+    // modelId.
+    std::string getNameFromInstanceColor(int r, int g, int b) const {
+        return scene_->get_name_from_instance_color(r, g, b);
+    }
+
+    private:
     SceneCache scene_cache_;
     SUNCGScene* scene_ = nullptr; // no ownership
 
@@ -121,7 +133,7 @@ class SUNCGRenderAPI {
 // Same as SUNCGRenderAPI, but delegates all methods to run on an independent thread, because OpenGL context is bound with thread.
 // As a result, you can do the following which is not allowed in SUNCGRenderAPI:
 // 1. Use the same instance in different threads.
-// 2. Create multiple instances in the same threads.
+// 2. Create multiple instances in one thread.
 // Note that this class is still NOT thread-safe. You cannot call its methods concurrently.
 class SUNCGRenderAPIThread {
   public:
@@ -132,6 +144,7 @@ class SUNCGRenderAPIThread {
     }
 
     ~SUNCGRenderAPIThread() {
+      // Destructor needs to run in a dedicated thread as well.
       exec_.execute_sync([=]() { api_.reset(nullptr); });
       exec_.stop();
     }
@@ -165,7 +178,11 @@ class SUNCGRenderAPIThread {
       });
     }
 
-  private:
+    std::string getNameFromInstanceColor(int r, int g, int b) const {
+        return this->api_->getNameFromInstanceColor(r, g, b);
+    }
+
+    private:
     std::unique_ptr<SUNCGRenderAPI> api_;
     ExecutorInThread exec_;
 };

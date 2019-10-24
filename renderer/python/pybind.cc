@@ -36,7 +36,9 @@ PYBIND11_MODULE(objrender, m) {
     .def("loadSceneNoCache", &SUNCGRenderAPI::loadSceneNoCache, "obj_file"_a, "model_category_file"_a, "semantic_label_file"_a, "model_blacklist_file"_a="")
     .def("resolution", &SUNCGRenderAPI::resolution)
     .def("render", &SUNCGRenderAPI::render)
-    .def("renderCubeMap", &SUNCGRenderAPI::renderCubeMap);
+    .def("renderCubeMap", &SUNCGRenderAPI::renderCubeMap)
+    .def("getNameFromInstanceColor", &SUNCGRenderAPI::getNameFromInstanceColor)
+      ;
 
 
   py::class_<SUNCGRenderAPIThread>(m, "RenderAPIThread")
@@ -49,7 +51,9 @@ PYBIND11_MODULE(objrender, m) {
     .def("loadScene", &SUNCGRenderAPIThread::loadScene, "obj_file"_a, "model_category_file"_a, "semantic_label_file"_a, "model_blacklist_file"_a="")
     .def("resolution", &SUNCGRenderAPIThread::resolution)
     .def("render", &SUNCGRenderAPIThread::render)
-    .def("renderCubeMap", &SUNCGRenderAPIThread::renderCubeMap);
+    .def("renderCubeMap", &SUNCGRenderAPIThread::renderCubeMap)
+    .def("getNameFromInstanceColor", &SUNCGRenderAPIThread::getNameFromInstanceColor)
+      ;
 
   auto camera = py::class_<Camera>(m, "Camera")
     .def("shift", &Camera::shift)

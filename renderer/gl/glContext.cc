@@ -10,10 +10,12 @@
 #undef INCLUDE_GL_CONTEXT_HEADERS
 #include "glContext.hh"
 #include <iostream>
+#include <atomic>
 
 #ifdef __linux__
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 #endif
 
 #include "lib/debugutils.hh"
@@ -22,6 +24,8 @@
 using namespace std;
 
 namespace {
+
+std::atomic_int NUM_EGLCONTEXT_ALIVE{0};
 
 #ifdef __linux__
 const EGLint EGLconfigAttribs[] = {
@@ -34,11 +38,21 @@ const EGLint EGLconfigAttribs[] = {
   EGL_NONE
 };
 
-const EGLint EGLpbufferAttribs[] = {
-  EGL_WIDTH, 9,
-  EGL_HEIGHT, 9,
-  EGL_NONE,
-};
+// const EGLint EGLpbufferAttribs[] = {
+//   EGL_WIDTH, 9,
+//   EGL_HEIGHT, 9,
+//   EGL_NONE,
+// };
+
+
+bool check_nvidia_readable(int device) {
+  string dev = ssprintf("/dev/nvidia%d", device);
+  int ret = open(dev.c_str(), O_RDONLY);
+  if (ret == -1)
+    return false;
+  close(ret);
+  return true;
+}
 
 const int GLXcontextAttribs[] = {
     GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
@@ -116,6 +130,7 @@ GLFWContext::~GLFWContext() {
 #ifdef __linux__
 // https://devblogs.nvidia.com/parallelforall/egl-eye-opengl-visualization-without-x-server/
 EGLContext::EGLContext(Geometry win_size, int device): GLContext{win_size} {
+  NUM_EGLCONTEXT_ALIVE.fetch_add(1);
   auto checkError = [](EGLBoolean succ) {
     EGLint err = eglGetError();
     if (err != EGL_SUCCESS)
@@ -138,8 +153,33 @@ EGLContext::EGLContext(Geometry win_size, int device): GLContext{win_size} {
     }
 
     eglQueryDevicesEXT(MAX_DEVICES, eglDevs, &numDevices);
-    cerr << "[EGL] Detected " << numDevices << " devices. Using device " << device << endl;
-    m_assert(device < numDevices);
+
+    std::vector<int> visible_devices;
+    if (numDevices > 1) {  // we must be using nvidia GPUs
+      // cgroup may block our access to /dev/nvidiaX, but eglQueryDevices can still see them.
+      for (int i = 0; i < numDevices; ++i) {
+        if (check_nvidia_readable(i))
+          visible_devices.push_back(i);
+      }
+    } else if (numDevices == 1) {
+      // TODO we may still be using nvidia GPUs, but there is no way to tell.
+      // But it's very rare that you'll start a docker and hide the only one GPU from it.
+      visible_devices.push_back(0);
+    } else {
+      error_exit("[EGL] eglQueryDevicesEXT() cannot find any EGL devices!");
+    }
+
+    if (device >= static_cast<int>(visible_devices.size())) {
+      error_exit(ssprintf("[EGL] Request device %d but only found %lu devices", device, visible_devices.size()));
+    }
+
+    if (static_cast<int>(visible_devices.size()) == numDevices) {
+      cerr << "[EGL] Detected " << numDevices << " devices. Using device " << device << endl;
+    } else {
+      cerr << "[EGL] " << visible_devices.size() << " out of " << numDevices <<
+          " devices are accessible. Using device " << device << " whose physical id is " << visible_devices[device] << "." << endl;
+      device = visible_devices[device];
+    }
     eglDpy_ = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, eglDevs[device], 0);
   }
 
@@ -147,12 +187,6 @@ EGLContext::EGLContext(Geometry win_size, int device): GLContext{win_size} {
 
   EGLBoolean succ = eglInitialize(eglDpy_, &major, &minor);
   if (!succ) {
-    // cgroup may block our access to /dev/nvidiaX, but eglQueryDevices can still see them. This can cause a failure at eglInitialize
-    string dev = ssprintf("/dev/nvidia%d", device);
-    int ret = open(dev.c_str(), O_RDONLY);
-    if (ret == -1) {
-      error_exit(ssprintf("Cannot access %s, failed to initialize EGL display! See README if you're inside cgroup/container.", dev.c_str()));
-    }
     error_exit("Failed to initialize EGL display!");
   }
   checkError(succ);
@@ -179,9 +213,9 @@ EGLContext::EGLContext(Geometry win_size, int device): GLContext{win_size} {
   checkError(succ);
 
   // 5. Create a context and make it current
-  ::EGLContext eglCtx = eglCreateContext(eglDpy_, eglCfg, (::EGLContext)0, NULL);
+  eglCtx_ = eglCreateContext(eglDpy_, eglCfg, (::EGLContext)0, NULL);
   checkError(succ);
-  succ = eglMakeCurrent(eglDpy_, eglSurf, eglSurf, eglCtx);
+  succ = eglMakeCurrent(eglDpy_, eglSurf, eglSurf, eglCtx_);
   if (!succ)
     error_exit("Failed to make EGL context current!");
   checkError(succ);
@@ -190,7 +224,11 @@ EGLContext::EGLContext(Geometry win_size, int device): GLContext{win_size} {
 }
 
 EGLContext::~EGLContext() {
+  // To debug https://github.com/facebookresearch/House3D/issues/37
+  // int num_alive = NUM_EGLCONTEXT_ALIVE.fetch_sub(1);
+  // print_debug("Inside ~EGLContext, #alive contexts=%d\n", num_alive);
   // 6. Terminate EGL when finished
+  eglDestroyContext(eglDpy_, eglCtx_);
   eglTerminate(eglDpy_);
 }
 
@@ -209,19 +247,22 @@ GLXHeadlessContext::GLXHeadlessContext(Geometry win_size): GLContext{win_size} {
   static glXCreateContextAttribsARBProc glXCreateContextAttribsARB = NULL;
   glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc) glXGetProcAddressARB( (const GLubyte *) "glXCreateContextAttribsARB" );
 
-  GLXContext openGLContext = glXCreateContextAttribsARB(dpy_, fbc[0], 0, True, GLXcontextAttribs);
+  context_ = glXCreateContextAttribsARB(dpy_, fbc[0], 0, True, GLXcontextAttribs);
 
-  GLXPbuffer pbuffer = glXCreatePbuffer(dpy_, fbc[0], GLXpbufferAttribs);
+  pbuffer_ = glXCreatePbuffer(dpy_, fbc[0], GLXpbufferAttribs);
 
   XFree(fbc);
   XSync(dpy_, False);
-  if (!glXMakeContextCurrent(dpy_, pbuffer, pbuffer, openGLContext))
+  if (!glXMakeContextCurrent(dpy_, pbuffer_, pbuffer_, context_))
     error_exit("Cannot create GLX context!");
 
   this->init();
 }
 
 GLXHeadlessContext::~GLXHeadlessContext() {
+  glXMakeContextCurrent(dpy_, GLXDrawable(NULL), GLXDrawable(NULL), NULL);
+  glXDestroyContext(dpy_, context_);
+  glXDestroyPbuffer(dpy_, pbuffer_);
   XCloseDisplay(dpy_);
 }
 
